@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secure Password Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        input[type="number"] { width: 100%; padding: 8px; margin-bottom: 10px; }
+        label { display: block; margin: 10px 0; }
+        button { padding: 10px 20px; background-color: blue; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button.copy-btn { background-color: green; margin-top: 10px; }
+        .error { color: red; }
+        .password { font-weight: bold; background: #f4f4f4; padding: 10px; border-radius: 5px; margin-top: 10px; }
+        .success { color: green; margin-top: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Secure Password Generator</h2>
+        <form method="POST">
+            <label>Password Length:</label>
+            <input type="number" name="length" min="1" required>
+
+            <label><input type="checkbox" name="digits"> Include Digits</label>
+            <label><input type="checkbox" name="special"> Include Special Characters</label>
+            <label><input type="checkbox" name="uppercase"> Include Uppercase Letters</label>
+
+            <button type="submit">Generate</button>
+        </form>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if password %}
+            <p>Your secure password:</p>
+            <div class="password" id="generatedPassword">{{ password }}</div>
+            <button class="copy-btn" onclick="copyPassword()">Copy to Clipboard</button>
+            <p id="copyMsg" class="success" style="display:none;">✅ Password copied!</p>
+
+            <script>
+                function copyPassword() {
+                    const pwd = document.getElementById("generatedPassword").textContent;
+                    navigator.clipboard.writeText(pwd).then(() => {
+                        document.getElementById("copyMsg").style.display = "block";
+                        setTimeout(() => {
+                            document.getElementById("copyMsg").style.display = "none";
+                        }, 2000);
+                    });
+                }
+
+                // Auto-copy on page load
+                window.onload = function() {
+                    const passwordElement = document.getElementById("generatedPassword");
+                    if (passwordElement) {
+                        navigator.clipboard.writeText(passwordElement.textContent);
+                        document.getElementById("copyMsg").style.display = "block";
+                        setTimeout(() => {
+                            document.getElementById("copyMsg").style.display = "none";
+                        }, 2000);
+                    }
+                };
+            </script>
+        {% endif %}
+    </div>
+</body>
+</html>
