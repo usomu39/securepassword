@@ -8,37 +8,35 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body, html {
-            height: 100%;
+            height: 100vh; /* Changed to viewport height */
+            width: 100vw; /* Added viewport width */
             font-family: Arial, sans-serif;
-            background: #0a0a0a;
+            background: transparent;
             color: white;
             overflow-x: hidden;
+            overflow-y: auto; /* Allow vertical scrolling if needed */
         }
-
         canvas#background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw; /* Full viewport width */
+            height: 100vh; /* Full viewport height */
             z-index: -1;
         }
-
         .container { 
             max-width: 400px; 
             margin: 50px auto; 
             padding: 20px; 
             border: 1px solid rgba(0,255,255,0.3); 
             border-radius: 8px;
-            background: rgba(0, 0, 40, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 40, 0.9);
+            backdrop-filter: blur(15px);
             box-shadow: 0 0 30px rgba(0,255,255,0.2);
             position: relative;
             z-index: 1;
         }
-
         input[type="number"] { 
             width: 100%; 
             padding: 8px; 
@@ -48,20 +46,17 @@
             color: white;
             border-radius: 4px;
         }
-
         input[type="number"]:focus {
             outline: none;
             border-color: #00ffff;
             box-shadow: 0 0 10px rgba(0,255,255,0.5);
         }
-
         label { 
             display: block; 
             margin: 10px 0; 
             color: white;
             cursor: pointer;
         }
-
         button { 
             padding: 10px 20px; 
             background: linear-gradient(45deg, #ff6b6b, #ee5a24); 
@@ -71,27 +66,22 @@
             border-radius: 4px;
             transition: all 0.3s ease;
         }
-
         button:hover {
             background: linear-gradient(45deg, #ee5a24, #d63031);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(255,107,107,0.4);
         }
-
         button.copy-btn { 
             background: linear-gradient(45deg, #00b894, #00a085); 
             margin-top: 10px; 
         }
-
         button.copy-btn:hover {
             background: linear-gradient(45deg, #00a085, #00896b);
             box-shadow: 0 5px 15px rgba(0,184,148,0.4);
         }
-
         .error { 
             color: #ff6b6b; 
         }
-
         .password { 
             font-weight: bold; 
             background: rgba(0, 184, 148, 0.2); 
@@ -102,13 +92,11 @@
             font-family: 'Courier New', monospace;
             letter-spacing: 1px;
         }
-
         .success { 
             color: #00b894; 
             margin-top: 5px; 
             font-size: 14px; 
         }
-
         h2 {
             color: #00ffff;
             text-align: center;
@@ -139,78 +127,74 @@
             <p id="copyMsg" class="success" style="display:none;">✅ Password copied!</p>
         {% endif %}
     </div>
-
     <script>
-        // 3D Geometric Particle Field Background
+        // 3D Geometric Particle Field - FIXED FOR FULL SCREEN
         const canvas = document.getElementById('background');
         const ctx = canvas.getContext('2d');
         let particles = [];
-        const particleCount = 150;
+        const particleCount = 200; // Increased for better coverage
         let mouse = { x: 0, y: 0 };
-
+        
         class Particle {
             constructor() {
                 this.reset();
                 this.life = Math.random();
             }
-
             reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.z = Math.random() * 1000;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.vz = Math.random() * 2 + 1;
+                // FIXED: Spread particles across entire screen
+                this.x = (Math.random() - 0.5) * canvas.width * 2;
+                this.y = (Math.random() - 0.5) * canvas.height * 2;
+                this.z = Math.random() * 1000 + 1;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.vz = Math.random() * 3 + 1;
                 this.life = 1;
-                this.decay = Math.random() * 0.005 + 0.003;
-                this.size = Math.random() * 4 + 1;
+                this.decay = Math.random() * 0.005 + 0.002;
+                this.size = Math.random() * 3 + 1;
             }
-
             update() {
                 // 3D movement
                 this.x += this.vx;
                 this.y += this.vy;
                 this.z -= this.vz;
                 
-                // Perspective calculation
-                const scale = 1000 / (1000 + this.z);
+                // Perspective calculation - FIXED
+                const perspective = canvas.width / 2;
+                const scale = perspective / (perspective + this.z);
                 this.screenX = this.x * scale + canvas.width / 2;
                 this.screenY = this.y * scale + canvas.height / 2;
                 this.screenSize = this.size * scale;
-
+                
                 // Life cycle
                 this.life -= this.decay;
-
-                // Reset particle when it dies or goes off screen
-                if (this.life <= 0 || this.z <= 0 || 
-                    this.screenX < 0 || this.screenX > canvas.width ||
-                    this.screenY < 0 || this.screenY > canvas.height) {
+                
+                // Reset when needed
+                if (this.life <= 0 || this.z <= 0) {
                     this.reset();
                 }
             }
-
             draw() {
-                const alpha = this.life;
-                const hue = (this.z * 0.1) % 360;
+                const alpha = Math.max(0, this.life);
+                const hue = (this.z * 0.2) % 360;
                 
-                // Draw particle with color based on depth
+                // Draw particle
                 ctx.save();
                 ctx.globalAlpha = alpha;
                 ctx.fillStyle = `hsl(${180 + hue}, 70%, 60%)`;
                 
                 ctx.beginPath();
-                ctx.arc(this.screenX, this.screenY, this.screenSize, 0, Math.PI * 2);
+                ctx.arc(this.screenX, this.screenY, Math.abs(this.screenSize), 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Add glow effect
-                ctx.shadowBlur = 20;
+                // Glow effect
+                ctx.shadowBlur = 15;
                 ctx.shadowColor = `hsl(${180 + hue}, 70%, 60%)`;
                 ctx.fill();
                 
                 ctx.restore();
             }
         }
-
+        
         function connectParticles() {
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
@@ -218,8 +202,8 @@
                     const dy = particles[i].screenY - particles[j].screenY;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (distance < 120) {
-                        const alpha = (1 - distance / 120) * 0.3;
+                    if (distance < 150 && distance > 0) {
+                        const alpha = Math.max(0, (1 - distance / 150) * 0.4);
                         ctx.save();
                         ctx.globalAlpha = alpha;
                         ctx.strokeStyle = '#00ffff';
@@ -233,21 +217,24 @@
                 }
             }
         }
-
+        
         function resize() {
+            // FIXED: Ensure proper canvas sizing
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
         }
-
+        
         function init() {
             particles = [];
             for (let i = 0; i < particleCount; i++) {
                 particles.push(new Particle());
             }
+            console.log('Initialized', particles.length, 'particles');
         }
-
+        
         function animate() {
-            // Create gradient background
+            // Clear and fill background
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             gradient.addColorStop(0, '#0a0a0a');
             gradient.addColorStop(0.5, '#1a1a2e');
@@ -255,31 +242,30 @@
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+            
             // Update and draw particles
             particles.forEach(particle => {
                 particle.update();
                 particle.draw();
             });
-
-            // Connect nearby particles
+            
+            // Connect particles
             connectParticles();
-
+            
             requestAnimationFrame(animate);
         }
-
-        // Mouse interaction
-        canvas.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
+        
+        // Event listeners
+        window.addEventListener('resize', () => {
+            resize();
+            init(); // Reinitialize particles on resize
         });
-
-        window.addEventListener('resize', resize);
-
+        
+        // Initialize
         resize();
         init();
         animate();
-
+        
         // Password Functions
         function copyPassword() {
             const pwd = document.getElementById("generatedPassword").textContent;
@@ -290,7 +276,7 @@
                 }, 2000);
             });
         }
-
+        
         window.onload = function() {
             const passwordElement = document.getElementById("generatedPassword");
             if (passwordElement) {
@@ -304,4 +290,3 @@
     </script>
 </body>
 </html>
-
