@@ -3,65 +3,305 @@
 <head>
     <title>Secure Password Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 50px; }
-        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-        input[type="number"] { width: 100%; padding: 8px; margin-bottom: 10px; }
-        label { display: block; margin: 10px 0; }
-        button { padding: 10px 20px; background-color: blue; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button.copy-btn { background-color: green; margin-top: 10px; }
-        .error { color: red; }
-        .password { font-weight: bold; background: #f4f4f4; padding: 10px; border-radius: 5px; margin-top: 10px; }
-        .success { color: green; margin-top: 5px; font-size: 14px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        canvas#background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container { 
+            max-width: 400px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            border: 1px solid rgba(0,255,255,0.3); 
+            border-radius: 8px;
+            background: rgba(0, 0, 40, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0,255,255,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        input[type="number"] { 
+            width: 100%; 
+            padding: 8px; 
+            margin-bottom: 10px; 
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(0,255,255,0.3);
+            color: white;
+            border-radius: 4px;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        }
+
+        label { 
+            display: block; 
+            margin: 10px 0; 
+            color: white;
+            cursor: pointer;
+        }
+
+        button { 
+            padding: 10px 20px; 
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24); 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #ee5a24, #d63031);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        button.copy-btn { 
+            background: linear-gradient(45deg, #00b894, #00a085); 
+            margin-top: 10px; 
+        }
+
+        button.copy-btn:hover {
+            background: linear-gradient(45deg, #00a085, #00896b);
+            box-shadow: 0 5px 15px rgba(0,184,148,0.4);
+        }
+
+        .error { 
+            color: #ff6b6b; 
+        }
+
+        .password { 
+            font-weight: bold; 
+            background: rgba(0, 184, 148, 0.2); 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-top: 10px; 
+            border: 1px solid rgba(0, 184, 148, 0.4);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        .success { 
+            color: #00b894; 
+            margin-top: 5px; 
+            font-size: 14px; 
+        }
+
+        h2 {
+            color: #00ffff;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
     </style>
 </head>
 <body>
+    <canvas id="background"></canvas>
+    
     <div class="container">
         <h2>Secure Password Generator</h2>
         <form method="POST">
             <label>Password Length:</label>
             <input type="number" name="length" min="1" required>
-
             <label><input type="checkbox" name="digits"> Include Digits</label>
             <label><input type="checkbox" name="special"> Include Special Characters</label>
             <label><input type="checkbox" name="uppercase"> Include Uppercase Letters</label>
-
             <button type="submit">Generate</button>
         </form>
-
         {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}
-
         {% if password %}
             <p>Your secure password:</p>
             <div class="password" id="generatedPassword">{{ password }}</div>
             <button class="copy-btn" onclick="copyPassword()">Copy to Clipboard</button>
             <p id="copyMsg" class="success" style="display:none;">✅ Password copied!</p>
-
-            <script>
-                function copyPassword() {
-                    const pwd = document.getElementById("generatedPassword").textContent;
-                    navigator.clipboard.writeText(pwd).then(() => {
-                        document.getElementById("copyMsg").style.display = "block";
-                        setTimeout(() => {
-                            document.getElementById("copyMsg").style.display = "none";
-                        }, 2000);
-                    });
-                }
-
-                // Auto-copy on page load
-                window.onload = function() {
-                    const passwordElement = document.getElementById("generatedPassword");
-                    if (passwordElement) {
-                        navigator.clipboard.writeText(passwordElement.textContent);
-                        document.getElementById("copyMsg").style.display = "block";
-                        setTimeout(() => {
-                            document.getElementById("copyMsg").style.display = "none";
-                        }, 2000);
-                    }
-                };
-            </script>
         {% endif %}
     </div>
+
+    <script>
+        // 3D Geometric Particle Field Background
+        const canvas = document.getElementById('background');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 150;
+        let mouse = { x: 0, y: 0 };
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.life = Math.random();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * 1000;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.vz = Math.random() * 2 + 1;
+                this.life = 1;
+                this.decay = Math.random() * 0.005 + 0.003;
+                this.size = Math.random() * 4 + 1;
+            }
+
+            update() {
+                // 3D movement
+                this.x += this.vx;
+                this.y += this.vy;
+                this.z -= this.vz;
+                
+                // Perspective calculation
+                const scale = 1000 / (1000 + this.z);
+                this.screenX = this.x * scale + canvas.width / 2;
+                this.screenY = this.y * scale + canvas.height / 2;
+                this.screenSize = this.size * scale;
+
+                // Life cycle
+                this.life -= this.decay;
+
+                // Reset particle when it dies or goes off screen
+                if (this.life <= 0 || this.z <= 0 || 
+                    this.screenX < 0 || this.screenX > canvas.width ||
+                    this.screenY < 0 || this.screenY > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                const alpha = this.life;
+                const hue = (this.z * 0.1) % 360;
+                
+                // Draw particle with color based on depth
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = `hsl(${180 + hue}, 70%, 60%)`;
+                
+                ctx.beginPath();
+                ctx.arc(this.screenX, this.screenY, this.screenSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = `hsl(${180 + hue}, 70%, 60%)`;
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].screenX - particles[j].screenX;
+                    const dy = particles[i].screenY - particles[j].screenY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 120) {
+                        const alpha = (1 - distance / 120) * 0.3;
+                        ctx.save();
+                        ctx.globalAlpha = alpha;
+                        ctx.strokeStyle = '#00ffff';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].screenX, particles[i].screenY);
+                        ctx.lineTo(particles[j].screenX, particles[j].screenY);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a0a0a');
+            gradient.addColorStop(0.5, '#1a1a2e');
+            gradient.addColorStop(1, '#16213e');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Connect nearby particles
+            connectParticles();
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse interaction
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('resize', resize);
+
+        resize();
+        init();
+        animate();
+
+        // Password Functions
+        function copyPassword() {
+            const pwd = document.getElementById("generatedPassword").textContent;
+            navigator.clipboard.writeText(pwd).then(() => {
+                document.getElementById("copyMsg").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("copyMsg").style.display = "none";
+                }, 2000);
+            });
+        }
+
+        window.onload = function() {
+            const passwordElement = document.getElementById("generatedPassword");
+            if (passwordElement) {
+                navigator.clipboard.writeText(passwordElement.textContent);
+                document.getElementById("copyMsg").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("copyMsg").style.display = "none";
+                }, 2000);
+            }
+        };
+    </script>
 </body>
 </html>
+
